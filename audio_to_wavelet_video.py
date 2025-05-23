@@ -5,12 +5,15 @@ from matplotlib.animation import FuncAnimation
 from moviepy.editor import VideoFileClip, AudioFileClip
 import os
 
-def create_wavelet_video(input_audio_path, output_video_path, fps=30):
+def create_wavelet_video(input_audio_path, output_video_path, fps=30, window_seconds=3):
     # Load the audio file
     y, sr = librosa.load(input_audio_path)
     
     # Calculate the duration of the audio
     duration = len(y) / sr
+    
+    # Window size in samples
+    window_size = int(window_seconds * sr)
     
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(12, 4))
@@ -19,20 +22,18 @@ def create_wavelet_video(input_audio_path, output_video_path, fps=30):
     
     # Set up the plot
     line, = ax.plot([], [], linewidth=1)
-    ax.set_xlim(0, len(y))
+    ax.set_xlim(0, window_size)
     ax.set_ylim(-1, 1)
     ax.axis('off')
     
     # Function to update the plot for each frame
     def update(frame):
-        # Calculate the window size for this frame
-        window_size = int(sr / fps)
-        start = frame * window_size
+        # Calculate the start and end of the moving window
+        start = frame * int(sr / fps)
         end = start + window_size
-        
-        # Get the audio data for this window
         if end > len(y):
             end = len(y)
+            start = max(0, end - window_size)
         data = y[start:end]
         
         # Calculate color based on amplitude
